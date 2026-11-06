@@ -20,8 +20,14 @@ function createWindow() {
 
 function configureAutoUpdates() {
   if (!app.isPackaged) return;
+
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on('checking-for-update', () => {
+    console.log('Checking for updates...');
+  });
+
   autoUpdater.on('update-available', () => {
     dialog.showMessageBox({
       type: 'info',
@@ -29,19 +35,38 @@ function configureAutoUpdates() {
       message: 'يوجد تحديث جديد لمنظومة الخصومات المصرفية، وسيتم تنزيله تلقائياً.'
     });
   });
+
+  autoUpdater.on('update-not-available', () => {
+    dialog.showMessageBox({
+      type: 'info',
+      title: 'البرنامج محدّث',
+      message: 'أنت تستخدم أحدث إصدار من منظومة الخصومات المصرفية.'
+    });
+  });
+
   autoUpdater.on('update-downloaded', () => {
     dialog.showMessageBox({
       type: 'info',
       title: 'التحديث جاهز',
-      message: 'تم تنزيل التحديث. سيتم تثبيته عند إغلاق المنظومة وفتحها مرة أخرى.'
+      message: 'تم تنزيل التحديث بنجاح. أغلق المنظومة وافتحها مرة أخرى لإكمال التثبيت.'
     });
   });
+
   autoUpdater.on('error', (error) => {
     console.error('Auto update error:', error);
+    dialog.showMessageBox({
+      type: 'warning',
+      title: 'تعذر إكمال التحديث',
+      message: 'لم يتمكن البرنامج من فحص التحديث أو تنزيله. تحقق من اتصال الإنترنت ثم حاول لاحقاً.',
+      detail: error && error.message ? error.message : 'خطأ غير معروف'
+    });
   });
-  setTimeout(() => autoUpdater.checkForUpdates().catch((error) => {
-    console.error('Update check failed:', error);
-  }), 5000);
+
+  setTimeout(() => {
+    autoUpdater.checkForUpdates().catch((error) => {
+      console.error('Update check failed:', error);
+    });
+  }, 5000);
 }
 
 app.whenReady().then(() => {
