@@ -113,6 +113,9 @@
     margin-top: 4px;
   }
   .btn-primary:hover { background: #1d4ed8; }
+  .btn-update { background:#fbbf24; color:#1f2937; border:1px solid #f59e0b; }
+  .btn-update:hover { background:#f59e0b; }
+  .btn-update:disabled { opacity:.65; cursor:wait; }
 
   .table-wrap { overflow-x: auto; margin-top: 10px; }
   table {
@@ -215,6 +218,7 @@
         <div id="liveClock" style="color:#e5e7eb;font-size:0.85rem;margin-top:6px;"></div>
       </div>
       <div>
+        <button class="btn-update" id="checkUpdatesBtn" type="button">⟳ البحث عن تحديثات</button>
         <button class="btn-ghost" id="backupBtn">نسخ احتياطي</button>
         <button class="btn-ghost" id="restoreBtn">استرداد</button>
         <button class="btn-danger" id="clearBtn">حذف البيانات</button>
@@ -706,6 +710,50 @@
   document.getElementById("filterMonth").addEventListener("input", render);
   document.getElementById("searchText").addEventListener("input", render);
   document.getElementById("printBtn").addEventListener("click", printTable);
+
+  const updateButton = document.getElementById("checkUpdatesBtn");
+  if (updateButton && window.appUpdater) {
+    updateButton.addEventListener("click", async () => {
+      updateButton.disabled = true;
+      updateButton.textContent = "جارٍ البحث عن تحديثات...";
+      try {
+        await window.appUpdater.checkForUpdates();
+      } catch (error) {
+        showToast("تعذر فحص التحديثات: " + (error.message || "تحقق من الإنترنت"));
+        updateButton.disabled = false;
+        updateButton.textContent = "⟳ البحث عن تحديثات";
+      }
+    });
+
+    window.appUpdater.onStatus((status) => {
+      if (status.type === "checking") {
+        updateButton.disabled = true;
+        updateButton.textContent = "جارٍ البحث...";
+      } else if (status.type === "available") {
+        updateButton.disabled = true;
+        updateButton.textContent = "جارٍ تنزيل التحديث...";
+        showToast("يوجد تحديث جديد، جارٍ تنزيله تلقائياً");
+      } else if (status.type === "not-available") {
+        updateButton.disabled = false;
+        updateButton.textContent = "⟳ البحث عن تحديثات";
+        showToast("أنت تستخدم أحدث إصدار");
+      } else if (status.type === "progress") {
+        updateButton.disabled = true;
+        updateButton.textContent = "تنزيل التحديث " + Math.round(status.percent || 0) + "%";
+      } else if (status.type === "downloaded") {
+        updateButton.disabled = false;
+        updateButton.textContent = "تثبيت التحديث وإعادة التشغيل";
+        updateButton.onclick = () => window.appUpdater.installUpdate();
+        showToast("اكتمل تنزيل التحديث. اضغط الزر لإعادة التشغيل والتثبيت");
+      } else if (status.type === "error") {
+        updateButton.disabled = false;
+        updateButton.textContent = "⟳ إعادة محاولة التحديث";
+        showToast("تعذر التحديث: " + (status.message || "خطأ غير معروف"));
+      }
+    });
+  } else if (updateButton) {
+    updateButton.addEventListener("click", () => showToast("التحديث متاح في نسخة البرنامج المثبتة فقط"));
+  }
 
   document.getElementById("backupBtn").addEventListener("click", () => {
     const data = loadData();
