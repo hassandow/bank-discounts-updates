@@ -1,6 +1,14 @@
-const { app, BrowserWindow, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const { autoUpdater } = require('electron-updater');
+
+let updateCheckRunning = false;
+
+function sendUpdateStatus(status) {
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (!win.isDestroyed()) win.webContents.send('updater:status', status);
+  }
+}
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -10,6 +18,7 @@ function createWindow() {
     minHeight: 650,
     autoHideMenuBar: true,
     webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true
@@ -25,48 +34,56 @@ function configureAutoUpdates() {
   autoUpdater.autoInstallOnAppQuit = true;
 
   autoUpdater.on('checking-for-update', () => {
-    console.log('Checking for updates...');
+    updateCheckRunning = true;
+    sendUpdateStatus({ type: 'checking' });
   });
 
-  autoUpdater.on('update-available', () => {
-    dialog.showMessageBox({
-      type: 'info',
-      title: 'تحديث جديد',
-      message: 'يوجد تحديث جديد لمنظومة الخصومات المصرفية، وسيتم تنزيله تلقائياً.'
-    });
+  autoUpdater.on('update-available', (info) => {
+    sendUpdateStatus({ type: 'available', version: info.version });
   });
 
   autoUpdater.on('update-not-available', () => {
-    dialog.showMessageBox({
-      type: 'info',
-      title: 'البرنامج محدّث',
-      message: 'أنت تستخدم أحدث إصدار من منظومة الخصومات المصرفية.'
-    });
+    updateCheckRunning = false;
+    sendUpdateStatus({ type: 'not-available' });
   });
 
-  autoUpdater.on('update-downloaded', () => {
-    dialog.showMessageBox({
-      type: 'info',
-      title: 'التحديث جاهز',
-      message: 'تم تنزيل التحديث بنجاح. أغلق المنظومة وافتحها مرة أخرى لإكمال التثبيت.'
-    });
+  autoUpdater.on('download-progress', (progress) => {
+    sendUpdateStatus({ type: 'progress', percent: progress.percent });
+  });
+
+  autoUpdater.on('update-downloaded', (info) => {
+    updateCheckRunning = false;
+    sendUpdateStatus({ type: 'downloaded', version: info.version });
   });
 
   autoUpdater.on('error', (error) => {
-    console.error('Auto update error:', error);
-    dialog.showMessageBox({
-      type: 'warning',
-      title: 'تعذر إكمال التحديث',
-      message: 'لم يتمكن البرنامج من فحص التحديث أو تنزيله. تحقق من اتصال الإنترنت ثم حاول لاحقاً.',
-      detail: error && error.message ? error.message : 'خطأ غير معروف'
-    });
+    updateCheckRunning = false;
+    sendUpdateStatus({ type: 'error', message: error && error.message ? error.message : 'خطأ غير معروف' });
+  });
+
+  ipcMain.handle('updater:check', async () => {
+    if (updateCheckRunning) return { started: true };
+    updateCheckRunning = true;
+    try {
+      await autoUpdater.checkForUpdates();
+      return { started: true };
+    } catch (error) {
+      updateCheckRunning = false;
+      sendUpdateStatus({ type: 'error', message: error && error.message ? error.message : 'تعذر فحص التحديثات' });
+      throw error;
+    }
+  });
+
+  ipcMain.handle('updater:install', () => {
+    autoUpdater.quitAndInstall();
   });
 
   setTimeout(() => {
     autoUpdater.checkForUpdates().catch((error) => {
-      console.error('Update check failed:', error);
+      updateCheckRunning = false;
+      sendUpdateStatus({ type: 'error', message: error && error.message ? error.message : 'تعذر فحص التحديثات' });
     });
-  }, 5000);
+  }, 7000);
 }
 
 app.whenReady().then(() => {
