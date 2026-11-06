@@ -713,7 +713,12 @@
 
   const updateButton = document.getElementById("checkUpdatesBtn");
   if (updateButton && window.appUpdater) {
+    let updateReadyToInstall = false;
     updateButton.addEventListener("click", async () => {
+      if (updateReadyToInstall) {
+        await window.appUpdater.installUpdate();
+        return;
+      }
       updateButton.disabled = true;
       updateButton.textContent = "جارٍ البحث عن تحديثات...";
       try {
@@ -742,8 +747,8 @@
         updateButton.textContent = "تنزيل التحديث " + Math.round(status.percent || 0) + "%";
       } else if (status.type === "downloaded") {
         updateButton.disabled = false;
+        updateReadyToInstall = true;
         updateButton.textContent = "تثبيت التحديث وإعادة التشغيل";
-        updateButton.onclick = () => window.appUpdater.installUpdate();
         showToast("اكتمل تنزيل التحديث. اضغط الزر لإعادة التشغيل والتثبيت");
       } else if (status.type === "error") {
         updateButton.disabled = false;
