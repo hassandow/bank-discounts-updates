@@ -116,6 +116,9 @@
   .btn-update { background:#fbbf24; color:#1f2937; border:1px solid #f59e0b; }
   .btn-update:hover { background:#f59e0b; }
   .btn-update:disabled { opacity:.65; cursor:wait; }
+  .version-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:9px; }
+  .version-badge { display:inline-flex; align-items:center; gap:6px; padding:6px 11px; border-radius:999px; background:#dbeafe; color:#1e3a8a; border:1px solid #93c5fd; font-size:.85rem; font-weight:800; }
+  .update-state { color:#e5e7eb; font-size:.82rem; }
 
   .table-wrap { overflow-x: auto; margin-top: 10px; }
   table {
@@ -216,6 +219,10 @@
       <div>
         <h1>منظومة الخصومات والمصاريف اليومية</h1>
         <div id="liveClock" style="color:#e5e7eb;font-size:0.85rem;margin-top:6px;"></div>
+        <div class="version-row">
+          <span class="version-badge" id="appVersionBadge">الإصدار الحالي: 1.0.10</span>
+          <span class="update-state" id="updateStateText">حالة التحديث: جاهز</span>
+        </div>
       </div>
       <div>
         <button class="btn-update" id="checkUpdatesBtn" type="button">⟳ البحث عن تحديثات</button>
@@ -712,6 +719,10 @@
   document.getElementById("printBtn").addEventListener("click", printTable);
 
   const updateButton = document.getElementById("checkUpdatesBtn");
+  const updateStateText = document.getElementById("updateStateText");
+  function setUpdateState(message) {
+    if (updateStateText) updateStateText.textContent = "حالة التحديث: " + message;
+  }
   if (updateButton && window.appUpdater) {
     let updateReadyToInstall = false;
     updateButton.addEventListener("click", async () => {
@@ -721,10 +732,12 @@
       }
       updateButton.disabled = true;
       updateButton.textContent = "جارٍ البحث عن تحديثات...";
+      setUpdateState("جارٍ البحث");
       try {
         await window.appUpdater.checkForUpdates();
       } catch (error) {
         showToast("تعذر فحص التحديثات: " + (error.message || "تحقق من الإنترنت"));
+        setUpdateState("تعذر الاتصال");
         updateButton.disabled = false;
         updateButton.textContent = "⟳ البحث عن تحديثات";
       }
@@ -734,25 +747,31 @@
       if (status.type === "checking") {
         updateButton.disabled = true;
         updateButton.textContent = "جارٍ البحث...";
+        setUpdateState("جارٍ البحث");
       } else if (status.type === "available") {
         updateButton.disabled = true;
         updateButton.textContent = "جارٍ تنزيل التحديث...";
+        setUpdateState("يتوفر إصدار أحدث " + (status.version || ""));
         showToast("يوجد تحديث جديد، جارٍ تنزيله تلقائياً");
       } else if (status.type === "not-available") {
         updateButton.disabled = false;
         updateButton.textContent = "⟳ البحث عن تحديثات";
+        setUpdateState("أنت على أحدث إصدار");
         showToast("أنت تستخدم أحدث إصدار");
       } else if (status.type === "progress") {
         updateButton.disabled = true;
         updateButton.textContent = "تنزيل التحديث " + Math.round(status.percent || 0) + "%";
+        setUpdateState("تنزيل " + Math.round(status.percent || 0) + "%");
       } else if (status.type === "downloaded") {
         updateButton.disabled = false;
         updateReadyToInstall = true;
         updateButton.textContent = "تثبيت التحديث وإعادة التشغيل";
+        setUpdateState("اكتمل التنزيل — جاهز للتثبيت");
         showToast("اكتمل تنزيل التحديث. اضغط الزر لإعادة التشغيل والتثبيت");
       } else if (status.type === "error") {
         updateButton.disabled = false;
         updateButton.textContent = "⟳ إعادة محاولة التحديث";
+        setUpdateState("تعذر التحديث");
         showToast("تعذر التحديث: " + (status.message || "خطأ غير معروف"));
       }
     });
