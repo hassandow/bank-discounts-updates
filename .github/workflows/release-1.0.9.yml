@@ -17,7 +17,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
       - name: Install dependencies
         run: npm install
@@ -34,6 +33,6 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            dist/Setup.1.0.9.exe
-            dist/Setup.1.0.9.exe.blockmap
+            dist/*.exe
+            dist/*.blockmap
             dist/latest.yml
