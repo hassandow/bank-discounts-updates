@@ -89,6 +89,7 @@ function configureAutoUpdates() {
 }
 
 app.whenReady().then(() => {
+  ipcMain.handle('app:version', () => app.getVersion());
   createWindow();
   configureAutoUpdates();
   app.on('activate', () => {
