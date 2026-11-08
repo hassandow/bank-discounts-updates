@@ -220,7 +220,7 @@
         <h1>منظومة الخصومات والمصاريف اليومية</h1>
         <div id="liveClock" style="color:#e5e7eb;font-size:0.85rem;margin-top:6px;"></div>
         <div class="version-row">
-          <span class="version-badge" id="appVersionBadge">الإصدار الحالي: 1.0.10</span>
+          <span class="version-badge" id="appVersionBadge">الإصدار الحالي: جارٍ التحميل...</span>
           <span class="update-state" id="updateStateText">حالة التحديث: جاهز</span>
         </div>
       </div>
@@ -717,6 +717,13 @@
   document.getElementById("filterMonth").addEventListener("input", render);
   document.getElementById("searchText").addEventListener("input", render);
   document.getElementById("printBtn").addEventListener("click", printTable);
+
+  const versionBadge = document.getElementById("appVersionBadge");
+  if (versionBadge && window.appUpdater && window.appUpdater.getVersion) {
+    window.appUpdater.getVersion()
+      .then((version) => { versionBadge.textContent = "الإصدار الحالي: " + version; })
+      .catch(() => { versionBadge.textContent = "الإصدار الحالي: غير معروف"; });
+  }
 
   const updateButton = document.getElementById("checkUpdatesBtn");
   const updateStateText = document.getElementById("updateStateText");
