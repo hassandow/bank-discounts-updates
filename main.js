@@ -32,6 +32,8 @@ function configureAutoUpdates() {
 
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
+  // تنزيل كامل ملف التثبيت بدلاً من التحديث التفاضلي الذي يحتاج ملف .blockmap.
+  autoUpdater.disableDifferentialDownload = true;
 
   autoUpdater.on('checking-for-update', () => {
     updateCheckRunning = true;
