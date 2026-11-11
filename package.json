@@ -19,6 +19,7 @@
   "build": {
     "appId": "ly.hassan.daily.deductions",
     "productName": "منظومة خصومات مصرفية",
+    "artifactName": "daily-deductions-expenses-setup-${version}.${ext}",
     "directories": {
       "output": "dist"
     },
