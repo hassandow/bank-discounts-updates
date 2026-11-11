@@ -744,11 +744,22 @@
         await window.appUpdater.checkForUpdates();
       } catch (error) {
         showToast("تعذر فحص التحديثات: " + (error.message || "تحقق من الإنترنت"));
-        setUpdateState("تعذر الاتصال");
+        setUpdateState("تعذر الاتصال — افتح سجل التحديث لمعرفة السبب");
         updateButton.disabled = false;
-        updateButton.textContent = "⟳ البحث عن تحديثات";
+        updateButton.textContent = "⟳ إعادة محاولة التحديث";
       }
     });
+
+    if (updateStateText) {
+      updateStateText.title = "اضغط هنا لفتح سجل التحديث عند وجود مشكلة";
+      updateStateText.style.cursor = "pointer";
+      updateStateText.addEventListener("click", async () => {
+        if (window.appUpdater.openUpdateLog) {
+          const result = await window.appUpdater.openUpdateLog();
+          if (result) showToast("تعذر فتح السجل: " + result);
+        }
+      });
+    }
 
     window.appUpdater.onStatus((status) => {
       if (status.type === "checking") {
@@ -778,7 +789,7 @@
       } else if (status.type === "error") {
         updateButton.disabled = false;
         updateButton.textContent = "⟳ إعادة محاولة التحديث";
-        setUpdateState("تعذر التحديث");
+        setUpdateState("تعذر التحديث — اضغط حالة التحديث لفتح السجل");
         showToast("تعذر التحديث: " + (status.message || "خطأ غير معروف"));
       }
     });
