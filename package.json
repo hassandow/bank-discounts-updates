@@ -1,6 +1,6 @@
 {
   "name": "daily-deductions-expenses",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "منظومة خصومات مصرفية",
   "main": "main.js",
   "author": "حسن ضؤ",
