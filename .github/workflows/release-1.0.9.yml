@@ -33,7 +33,7 @@ jobs:
           }
           $artifactName = (node -p "require('./package.json').build.artifactName").Trim()
           $expected = "daily-deductions-expenses-setup-$version.exe"
-          if ($artifactName -ne "daily-deductions-expenses-setup-${version}.${ext}") {
+          if ($artifactName -ne 'daily-deductions-expenses-setup-${version}.${ext}') {
             throw "Unexpected build.artifactName: $artifactName"
           }
           Write-Host "Expected installer: $expected"
