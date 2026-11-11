@@ -1,0 +1,53 @@
+name: Build and publish Windows release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Verify required application files
+        shell: pwsh
+        run: |
+          $required = @("index.html", "main.js", "preload.js", "package.json")
+          foreach ($file in $required) {
+            if (!(Test-Path $file)) { throw "Missing required file: $file" }
+          }
+
+      - name: Build Windows installer
+        run: npx electron-builder --win nsis --x64 --publish never
+
+      - name: Verify build artifacts
+        shell: pwsh
+        run: |
+          if (!(Test-Path "dist")) { throw "dist folder was not created" }
+          if (!(Get-ChildItem "dist" -Filter "*.exe" -File)) { throw "Installer EXE is missing" }
+          if (!(Test-Path "dist/latest.yml")) { throw "latest.yml is missing" }
+
+      - name: Publish release 1.0.10
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: 1.0.10
+          name: منظومة الخصومات المصرفية 1.0.10
+          target_commitish: ${{ github.sha }}
+          draft: false
+          prerelease: false
+          files: |
+            dist/*.exe
+            dist/*.blockmap
+            dist/latest.yml
