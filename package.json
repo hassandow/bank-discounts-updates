@@ -1,6 +1,6 @@
 {
   "name": "daily-deductions-expenses",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "منظومة خصومات مصرفية",
   "main": "main.js",
   "author": "حسن ضؤ",
@@ -19,7 +19,7 @@
   "build": {
     "appId": "ly.hassan.daily.deductions",
     "productName": "منظومة خصومات مصرفية",
-    "artifactName": "daily-deductions-expenses-setup-${version}.${ext}",
+    "artifactName": "daily-deductions-expenses-setup.${ext}",
     "directories": {
       "output": "dist"
     },
