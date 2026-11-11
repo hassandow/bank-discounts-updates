@@ -4,6 +4,9 @@ const { autoUpdater } = require('electron-updater');
 
 let updateCheckRunning = false;
 
+// إرجاع رقم الإصدار الفعلي من package.json لعرضه في واجهة المنظومة.
+ipcMain.handle('app:version', () => app.getVersion());
+
 function sendUpdateStatus(status) {
   for (const win of BrowserWindow.getAllWindows()) {
     if (!win.isDestroyed()) win.webContents.send('updater:status', status);
