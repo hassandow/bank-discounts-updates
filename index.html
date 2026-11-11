@@ -216,6 +216,7 @@
       <div>
         <h1>منظومة الخصومات والمصاريف اليومية</h1>
         <div id="liveClock" style="color:#e5e7eb;font-size:0.85rem;margin-top:6px;"></div>
+        <div id="appVersion" style="color:#dbeafe;font-size:0.82rem;margin-top:4px;">الإصدار: <span id="versionValue">1.0.10</span></div>
       </div>
       <div>
         <button class="btn-update" id="checkUpdatesBtn" type="button">⟳ البحث عن تحديثات</button>
@@ -710,6 +711,11 @@
   document.getElementById("filterMonth").addEventListener("input", render);
   document.getElementById("searchText").addEventListener("input", render);
   document.getElementById("printBtn").addEventListener("click", printTable);
+
+  const versionValue = document.getElementById("versionValue");
+  if (versionValue && window.appUpdater && typeof window.appUpdater.getVersion === "function") {
+    window.appUpdater.getVersion().then((version) => { versionValue.textContent = version || "1.0.10"; }).catch(() => {});
+  }
 
   const updateButton = document.getElementById("checkUpdatesBtn");
   if (updateButton && window.appUpdater) {
