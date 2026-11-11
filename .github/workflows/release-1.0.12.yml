@@ -1,0 +1,72 @@
+name: Build and publish Windows release 1.0.12
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Verify application version and installer naming
+        shell: pwsh
+        run: |
+          $version = (node -p "require('./package.json').version").Trim()
+          if ($version -ne "1.0.12") {
+            throw "Expected package.json version 1.0.12, found $version"
+          }
+          $artifactName = (node -p "require('./package.json').build.artifactName").Trim()
+          if ($artifactName -ne 'daily-deductions-expenses-setup.${ext}') {
+            throw "Unexpected build.artifactName: $artifactName"
+          }
+          Write-Host "Expected installer: daily-deductions-expenses-setup.exe"
+
+      - name: Build Windows installer
+        run: npx electron-builder --win nsis --x64 --publish never
+
+      - name: Verify update metadata and installer
+        shell: pwsh
+        run: |
+          $installerPath = "dist/daily-deductions-expenses-setup.exe"
+          if (!(Test-Path "dist/latest.yml")) { throw "dist/latest.yml was not generated" }
+          if (!(Test-Path $installerPath)) { throw "Expected installer was not generated: $installerPath" }
+          $installer = Get-Item $installerPath
+          if ($installer.Length -le 0) { throw "Installer is empty" }
+          $yaml = Get-Content "dist/latest.yml" -Raw
+          if ($yaml -notmatch [regex]::Escape($installer.Name)) {
+            throw "latest.yml does not reference the exact installer name $($installer.Name)"
+          }
+          if ($yaml -notmatch 'sha512:\s*\S+') { throw "latest.yml is missing sha512" }
+          if ($yaml -notmatch 'size:\s*\d+') { throw "latest.yml is missing installer size" }
+          Write-Host "Verified installer: $($installer.Name)"
+          Write-Host "Size: $($installer.Length) bytes"
+          Write-Host $yaml
+
+      - name: Publish release 1.0.12
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: 1.0.12
+          name: منظومة الخصومات المصرفية – الإصدار 1.0.12
+          target_commitish: main
+          draft: false
+          prerelease: false
+          fail_on_unmatched_files: true
+          files: |
+            dist/daily-deductions-expenses-setup.exe
+            dist/daily-deductions-expenses-setup.exe.blockmap
+            dist/latest.yml
